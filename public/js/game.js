@@ -217,7 +217,7 @@ const LEG = new THREE.BoxGeometry(PLAYER_DIMENSIONS.legWidth, PLAYER_DIMENSIONS.
 const HEAD = new THREE.BoxGeometry(PLAYER_DIMENSIONS.headLength, PLAYER_DIMENSIONS.headLength, PLAYER_DIMENSIONS.headLength);
 const ARM = new THREE.BoxGeometry(PLAYER_DIMENSIONS.legWidth, PLAYER_DIMENSIONS.armLength, PLAYER_DIMENSIONS.legWidth);
 const BICEP = new THREE.SphereGeometry(PLAYER_DIMENSIONS.bicepRadius)
-const WORKER_BASE_SPEED = developerMode() ? 0.001 : .001;
+const WORKER_BASE_SPEED = developerMode() ? 0 : .001;
 const workerGroups = [];
 
 
@@ -244,6 +244,14 @@ class Worker {
     this.rightLegMesh = new THREE.Mesh(LEG, this.skinMaterial);
     this.playerMesh.add(this.rightLegMesh);
     this.rightLegMesh.position.setX((PLAYER_DIMENSIONS.bodyWidth / 2) - (PLAYER_DIMENSIONS.legWidth / 2));
+
+    if (this.group.type == 'camel') {
+      this.leftLegMesh.rotation.x = degToRad(320);
+      this.leftLegMesh.position.setZ(0.4);
+
+      this.rightLegMesh.rotation.x = degToRad(320);
+      this.rightLegMesh.position.setZ(0.4);
+    }
 
     this.headMesh = new THREE.Mesh(HEAD, this.skinMaterial)
     this.playerMesh.add(this.headMesh);
@@ -281,11 +289,129 @@ class Worker {
   }
 }
 
+class Storage {
+  constructor(parent) {
+    this.parent = parent;
+  }
+
+  getPlacementLocation() {
+    return new THREE.Vector3(1, 1, 0.5);
+  }
+
+  createObjects() {
+
+  }
+
+  placePlayer(i) {
+    return new THREE.Vector3(i / 2, 0, i % 2)
+  }
+}
+
+class StorageSled extends Storage {
+  constructor(parent) {
+    super(parent);
+  }
+
+  getPlacementLocation() {
+    return new THREE.Vector3(0.5, 0, -1.5);
+  }
+
+  createObjects() {
+    const sledGeometry = new THREE.PlaneGeometry(1.5, 2);
+    const sledMaterial = new THREE.MeshLambertMaterial({color: 0x9D3F34, side: THREE.DoubleSide});
+    const sledMesh = new THREE.Mesh(sledGeometry, sledMaterial);
+    sledMesh.rotateX(degToRad(90));
+    sledMesh.position.x = PLAYER_DIMENSIONS.bodyWidth;
+    sledMesh.position.y = -(PLAYER_DIMENSIONS.legsHeight / 2);
+    sledMesh.position.z = -PLAYER_DIMENSIONS.bodyWidth * 3;
+    this.parent.mesh.add(sledMesh);
+    // const ropeMaterial = new THREE.LineBasicMaterial({color: 0x26160D}); http://threejs.org/docs/index.html?q=Line#Reference/Objects/Line
+  }
+
+  placePlayer(i) {
+    return new THREE.Vector3(i, 0, 0);
+  }
+}
+
+class StorageCamel extends Storage {
+  constructor(parent) {
+    super(parent);
+
+    this.stomachRadius = .5;
+    this.stomachLength = .9;
+    this.legHeight = 5;
+  }
+
+  getPlacementLocation() {
+    return new THREE.Vector3(0.5, this.legHeight * .70, 0.3);
+  }
+
+  placePlayer(i) {
+    return new THREE.Vector3(0.5, this.legHeight * .65, 2);
+  }
+
+  createObjects() {
+    const camelLightMaterial = new THREE.MeshLambertMaterial({color: 0xCFB16E});
+    const camelDarkMaterial = new THREE.MeshLambertMaterial({color: 0xA88338});
+
+    const legGeometry = new THREE.CylinderGeometry(0.2, 0.05, this.legHeight);
+
+    const leftFrontLeg = new THREE.Mesh(legGeometry, camelLightMaterial);
+    this.parent.mesh.add(leftFrontLeg);
+    leftFrontLeg.position.x = 0;
+
+    const rightFrontLeg = new THREE.Mesh(legGeometry, camelLightMaterial);
+    this.parent.mesh.add(rightFrontLeg);
+    rightFrontLeg.position.x = this.stomachRadius * 2;
+
+    const leftBackLeg = new THREE.Mesh(legGeometry, camelLightMaterial);
+    this.parent.mesh.add(leftBackLeg);
+    leftBackLeg.position.x = 0;
+    leftBackLeg.position.z = this.stomachLength * 3;
+
+    const rightBackLeg = new THREE.Mesh(legGeometry, camelLightMaterial);
+    this.parent.mesh.add(rightBackLeg);
+    rightBackLeg.position.x = this.stomachRadius * 2;
+    rightBackLeg.position.z = this.stomachLength * 3;
+
+    const stomachCenter = new THREE.TorusGeometry(this.stomachRadius, this.stomachLength, 10, 12);
+    const stomachCenterMesh = new THREE.Mesh(stomachCenter, camelDarkMaterial);
+    this.parent.mesh.add(stomachCenterMesh);
+    stomachCenterMesh.position.setX(0.5);
+    stomachCenterMesh.position.setY(this.legHeight / 2);
+    stomachCenterMesh.position.setZ(this.stomachLength * 1.5);
+
+    const stomachPart = new THREE.SphereGeometry(this.stomachRadius * 2);
+    const stomachPartFront = new THREE.Mesh(stomachPart, camelDarkMaterial);
+    stomachCenterMesh.add(stomachPartFront);
+    stomachPartFront.position.setZ(this.stomachRadius * 1.25);
+
+    const stomachPartBack = new THREE.Mesh(stomachPart, camelDarkMaterial);
+    stomachCenterMesh.add(stomachPartBack);
+    stomachPartBack.position.setZ(-this.stomachRadius * 1.25);
+
+    const neckCurve = new THREE.TorusGeometry(1, this.stomachRadius, 8, 6, 2.4);
+    const neck = new THREE.Mesh(neckCurve, camelDarkMaterial);
+    stomachPartFront.add(neck);
+    neck.rotateY(80);
+    neck.rotateZ(180);
+    neck.position.setY(0.5);
+    neck.position.setZ(1.3);
+
+    const headGeometry = new THREE.SphereGeometry(0.7, 16, 6);
+    const head = new THREE.Mesh(headGeometry, camelLightMaterial);
+    neck.add(head);
+    head.position.x = -0.65;
+    head.position.y = .8;
+  }
+}
+
 class WorkerGroup {
   constructor(type) {
     this.type = type;
     this.workers = [];
     this.block = {};
+    this.storage = {};
     this.startPosition = new THREE.Vector3(PYRAMID_WIDTH / 2, 2, getRandomInt(-(PYRAMID_WIDTH / 2), PYRAMID_WIDTH / 2));
     this.target = this.startPosition;
     this.speed = WORKER_BASE_SPEED;
@@ -295,11 +421,28 @@ class WorkerGroup {
     scene.add(this.mesh);
 
     switch (type) {
-      case 'basic': this.generateWorkers(4); break;
+      case 'basic':
+        this.storage = new Storage(this);
+        this.generateWorkers(4);
+        break;
+      case 'strong':
+        this.storage = new Storage(this);
+        this.speed += 0.002;
+        this.generateWorkers(2);
+        break;
+      case 'sled':
+        this.storage = new StorageSled(this);
+        this.speed += 0.004;
+        this.generateWorkers(2);
+        break;
+      case 'camel':
+       this.storage = new StorageCamel(this);
+       this.speed += 0.008;
+       this.generateWorkers(1);
+       break;
     }
 
-    const boundingExpand = 2.5
-    this.boundingBox = new THREE.Box3().setFromObject(this.mesh).expandByVector(new THREE.Vector3(boundingExpand, boundingExpand, boundingExpand));
+    this.storage.createObjects();
     this.getBlockTarget();
   }
 
@@ -320,7 +463,7 @@ class WorkerGroup {
 
   generateWorkers(amount) {
     for (var i = 0; i < amount; i++) {
-      const worker = new Worker(new THREE.Vector3(i / 2, 0, i % 2), this);
+      const worker = new Worker(this.storage.placePlayer(i), this);
       this.workers.push(worker);
       this.mesh.add(worker.playerMesh);
     }
@@ -353,7 +496,8 @@ class WorkerGroup {
         this.target = new THREE.Vector3().copy(this.block.position);
         scene.remove(this.block);
         this.mesh.add(this.block);
-        this.block.position.set(1, 1, 0.5);
+        const placement = this.storage.getPlacementLocation();
+        this.block.position.set(placement.x, placement.y, placement.z);
 
         setTimeout(function() {
           this.getPlacementTarget();
@@ -388,9 +532,15 @@ class WorkerGroup {
     });
   }
 }
-// workerGroups.push(new WorkerGroup('basic'));
-for (var i = 0; i < 10; i++) {
-  workerGroups.push(new WorkerGroup('basic'));
+workerGroups.push(new WorkerGroup('camel'));
+// for (var i = 0; i < 5; i++) {
+//   workerGroups.push(new WorkerGroup('basic'));
+// }
+for (var i = 0; i < 5; i++) {
+  workerGroups.push(new WorkerGroup('strong'));
+}
+for (var i = 0; i < 5; i++) {
+  workerGroups.push(new WorkerGroup('camel'));
 }
 
 function render() {
