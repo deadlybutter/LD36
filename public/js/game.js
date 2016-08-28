@@ -89,7 +89,7 @@ const CUBE_LENGTH = 1;
 const cubeGeometry = new THREE.BoxGeometry(CUBE_LENGTH, CUBE_LENGTH, CUBE_LENGTH);
 const cubeMaterial = new THREE.MeshLambertMaterial({wireframe: false, color: 0xffffff});
 const availableCubes = [];
-const PYRAMID_HEIGHT = developerMode() ? 3 : 17;
+const PYRAMID_HEIGHT = developerMode() ? 7 : 17;
 var pyramidGrid = [];
 for (var i = 0; i < PYRAMID_HEIGHT; i++) {
   pyramidGrid.push([]);
@@ -217,7 +217,7 @@ const LEG = new THREE.BoxGeometry(PLAYER_DIMENSIONS.legWidth, PLAYER_DIMENSIONS.
 const HEAD = new THREE.BoxGeometry(PLAYER_DIMENSIONS.headLength, PLAYER_DIMENSIONS.headLength, PLAYER_DIMENSIONS.headLength);
 const ARM = new THREE.BoxGeometry(PLAYER_DIMENSIONS.legWidth, PLAYER_DIMENSIONS.armLength, PLAYER_DIMENSIONS.legWidth);
 const BICEP = new THREE.SphereGeometry(PLAYER_DIMENSIONS.bicepRadius)
-const WORKER_BASE_SPEED = developerMode() ? 0 : .001;
+const WORKER_BASE_SPEED = developerMode() ? 0.001 : .001;
 const workerGroups = [];
 
 
@@ -425,7 +425,7 @@ class StorageAlien extends Storage {
       const beamMaterial = new THREE.MeshLambertMaterial({color: 0xDAEEF5, emissive: 0x8FDDF7, side: THREE.DoubleSide, transparent: true, opacity: 0.5});
       this.beam = new THREE.Mesh(beamGeometry, beamMaterial);
       this.base.add(this.beam);
-      this.beam.position.setY(this.radius * 1.5);
+      this.beam.position.setY(this.heightOffset * 0.5);
     }
     else {
       this.base.remove(this.beam);
@@ -546,14 +546,16 @@ class WorkerGroup {
     const theta = Math.atan2(dir.x, dir.z);
     this.mesh.rotation.y = theta;
 
-    raycaster.set(this.mesh.position, new THREE.Vector3(0, -1, 0).normalize());
-    const intersections = raycaster.intersectObjects(scene.children);
-    if (intersections[0]) {
-      this.mesh.position.setY(intersections[0].point.y + PLAYER_DIMENSIONS.legsHeight);
+    if (this.type != 'alien') {
+      raycaster.set(this.mesh.position, new THREE.Vector3(0, -1, 0).normalize());
+      const intersections = raycaster.intersectObjects(scene.children);
+      if (intersections[0]) {
+        this.mesh.position.setY(intersections[0].point.y + PLAYER_DIMENSIONS.legsHeight);
+      }
     }
 
     const exchangeDelay = this.storage.customExchangeDelay || 1000;
-    const exchangeFunction = this.storage.customExchangeFunction.bind(this.storage) || function(status) {};
+    const exchangeFunction = this.storage.customExchangeFunction ? this.storage.customExchangeFunction.bind(this.storage) : function(status) {};
 
     if (this.state == 'get') {
       if (this.atTarget() && this.block) {
@@ -572,10 +574,12 @@ class WorkerGroup {
       }
     }
     else if(this.state == 'going back') {
-      raycaster.set(this.mesh.position, new THREE.Vector3(0, 0, 1).normalize());
-      const intersections = raycaster.intersectObjects(scene.children);
-      if (intersections[0] && intersections[0].distance <= 1) {
-        this.mesh.position.setY(intersections[0].point.y + PLAYER_DIMENSIONS.bodyHeight);
+      if (this.type != 'alien') {
+        raycaster.set(this.mesh.position, new THREE.Vector3(0, 0, 1).normalize());
+        const intersections = raycaster.intersectObjects(scene.children);
+        if (intersections[0] && intersections[0].distance <= 1) {
+          this.mesh.position.setY(intersections[0].point.y + PLAYER_DIMENSIONS.bodyHeight);
+        }
       }
 
       if (this.atTarget() && this.block) {
@@ -602,15 +606,15 @@ class WorkerGroup {
   }
 }
 workerGroups.push(new WorkerGroup('alien'));
-// for (var i = 0; i < 5; i++) {
-//   workerGroups.push(new WorkerGroup('basic'));
-// }
-// for (var i = 0; i < 5; i++) {
-//   workerGroups.push(new WorkerGroup('strong'));
-// }
-// for (var i = 0; i < 5; i++) {
-//   workerGroups.push(new WorkerGroup('camel'));
-// }
+for (var i = 0; i < 5; i++) {
+  workerGroups.push(new WorkerGroup('basic'));
+}
+for (var i = 0; i < 5; i++) {
+  workerGroups.push(new WorkerGroup('strong'));
+}
+for (var i = 0; i < 5; i++) {
+  workerGroups.push(new WorkerGroup('camel'));
+}
 
 function render() {
   requestAnimationFrame(render);
