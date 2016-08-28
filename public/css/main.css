@@ -74,15 +74,23 @@ body > canvas {
   margin: 8px;
   color: #111;
   cursor: pointer;
-  max-height: 96px;
+  min-height: 64px;
   text-align: left;
+}
+
+.shop .item h1 {
+  margin: 0;
+  font-size: : 24px;
+}
+
+.shop .item p {
+  margin: 0;
 }
 
 .shop .item img {
   height: 64px;
   width: 64px;
   float: left;
-  margin-bottom: 24px;
 }
 
 .shop .item span {
