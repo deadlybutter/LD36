@@ -15,6 +15,17 @@ function rotateAroundObjectAxis(object, axis, radians) {
     object.rotation.setFromRotationMatrix(object.matrix);
 }
 
+// http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 function degToRad(deg) {
   return deg * (Math.PI / 180);
 }
@@ -107,7 +118,7 @@ const CUBE_LENGTH = 1;
 const cubeGeometry = new THREE.BoxGeometry(CUBE_LENGTH, CUBE_LENGTH, CUBE_LENGTH);
 const cubeMaterial = new THREE.MeshLambertMaterial({wireframe: false, color: 0xffffff});
 const availableCubes = [];
-const PYRAMID_HEIGHT = 3;
+const PYRAMID_HEIGHT = getParameterByName('height') || 9;
 const pyramidGrid = [];
 const pyramidLayers = [];
 for (var i = 0; i < PYRAMID_HEIGHT; i++) {
