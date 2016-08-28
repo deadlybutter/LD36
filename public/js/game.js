@@ -27,6 +27,9 @@ function developerMode() {
   return localStorage.getItem('ld36-dev') === "true";
 }
 
+var GAME_WON = false;
+var FLY_AWAY = false;
+
 const SKY_COLOR_LIGHT = new THREE.Color(0xbfd1e5);
 const SKY_COLOR_DARK = 0x111111;
 const GROUND_COLOR = 0xCBA862;
@@ -90,7 +93,6 @@ terrainGeometry.vertices.forEach(function(vertice) {
 const colors = [0xD0C371, 0xC7A757, 0xC79A57, 0xD4BD7D];
 terrainGeometry.faces.forEach(function(face) {
   const color = colors[getRandomInt(0, colors.length - 1)];
-  console.log(color)
   face.color.setHex(color);
 });
 
@@ -105,7 +107,7 @@ const CUBE_LENGTH = 1;
 const cubeGeometry = new THREE.BoxGeometry(CUBE_LENGTH, CUBE_LENGTH, CUBE_LENGTH);
 const cubeMaterial = new THREE.MeshLambertMaterial({wireframe: false, color: 0xffffff});
 const availableCubes = [];
-const PYRAMID_HEIGHT = 9;
+const PYRAMID_HEIGHT = 3;
 const pyramidGrid = [];
 const pyramidLayers = [];
 for (var i = 0; i < PYRAMID_HEIGHT; i++) {
@@ -230,6 +232,9 @@ function fillQuery(totalBlocks) {
 }
 fillQuery(50);
 setInterval(function() {
+  if (GAME_WON) {
+    return;
+  }
   if (availableCubes.length <= 20) {
     fillQuery(20);
   }
@@ -552,6 +557,9 @@ class WorkerGroup {
   getPlacementTarget() {
     this.state = 'going back';
     this.target = getNextBlockPlacement();
+    if (this.target == undefined) {
+      setWinState();
+    }
   }
 
   generateWorkers(amount) {
@@ -581,12 +589,17 @@ class WorkerGroup {
     const theta = Math.atan2(dir.x, dir.z);
     this.mesh.rotation.y = theta;
 
-    if (this.type != 'alien') {
+    if (this.type != 'alien' || GAME_WON) {
       raycaster.set(this.mesh.position, new THREE.Vector3(0, -1, 0).normalize());
       const intersections = raycaster.intersectObjects(scene.children);
       if (intersections[0]) {
         this.mesh.position.setY(intersections[0].point.y + PLAYER_DIMENSIONS.legsHeight);
       }
+    }
+
+    if (GAME_WON && !this.block) {
+      this.target = new THREE.Vector3(0, 0, 0);
+      return;
     }
 
     const exchangeDelay = this.storage.customExchangeDelay || 1000;
@@ -629,6 +642,10 @@ class WorkerGroup {
         addBlockToPyramid(newBlock);
         this.block = {};
 
+        if (GAME_WON) {
+          return;
+        }
+
         setTimeout(function() {
           exchangeFunction(false);
           this.getBlockTarget();
@@ -642,18 +659,54 @@ class WorkerGroup {
   }
 }
 
+function removeBuildingBlock(block) {
+  console.log(block);
+  if (block == undefined) {
+    return;
+  }
+
+  scene.remove(block);
+  removeBuildingBlock(getAvailableBuildingBlock());
+}
+
+function setWinState() {
+  GAME_WON = true;
+  removeBuildingBlock(getAvailableBuildingBlock());
+  workerGroups.forEach(function(workerGroup) {
+    workerGroup.speed = 1;
+    if (!workerGroup.target) {
+      workerGroup.target = new THREE.Vector3(0, 0, 0);
+    }
+  });
+
+  setTimeout(function() {
+    FLY_AWAY = true;
+  }, 4000);
+}
+
 // Starting builders
 for (var i = 0; i < 4; i++) {
   workerGroups.push(new WorkerGroup('basic'));
 }
 
+var skyAlpha = 1;
+const flyRate = 10;
 function render() {
   animationID = requestAnimationFrame(render);
   controls.update();
 
-  workerGroups.forEach(function(workerGroup) {
-    workerGroup.update();
-  })
+  if (GAME_WON && FLY_AWAY) {
+    terrain.position.y -= flyRate * clock.getDelta();
+    skyAlpha -= .002;
+    sun.intensity -= .002;
+    sun2.intensity -= .002;
+    renderer.setClearColor(new THREE.Color(SKY_COLOR_DARK).lerp(SKY_COLOR_LIGHT, skyAlpha), 1);
+  }
+  else {
+    workerGroups.forEach(function(workerGroup) {
+      workerGroup.update();
+    });
+  }
 
   renderer.render(scene, camera);
   stats.update();
