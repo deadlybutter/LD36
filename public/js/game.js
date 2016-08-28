@@ -406,6 +406,59 @@ class StorageCamel extends Storage {
   }
 }
 
+class StorageAlien extends Storage {
+  constructor(parent) {
+    super(parent);
+
+    this.heightOffset = PYRAMID_HEIGHT + 2;
+    this.radius = 2;
+    this.base = {};
+
+    this.customExchangeDelay = 2000;
+    this.customExchangeFunction = this.createBeam;
+    this.beam = {};
+  }
+
+  createBeam(status) {
+    if (status) {
+      const beamGeometry = new THREE.CylinderGeometry(this.radius, 1.2, this.heightOffset, 8, 1, true);
+      const beamMaterial = new THREE.MeshLambertMaterial({color: 0xDAEEF5, emissive: 0x8FDDF7, side: THREE.DoubleSide, transparent: true, opacity: 0.5});
+      this.beam = new THREE.Mesh(beamGeometry, beamMaterial);
+      this.base.add(this.beam);
+      this.beam.position.setY(this.radius * 1.5);
+    }
+    else {
+      this.base.remove(this.beam);
+    }
+  }
+
+  getPlacementLocation() {
+    return new THREE.Vector3(0, this.heightOffset + 1, 0);
+  }
+
+  placePlayer(i) {
+    return new THREE.Vector3(0.5, this.legHeight * .65, 2);
+  }
+
+  createObjects() {
+    const baseMaterial = new THREE.MeshLambertMaterial({color: 0xA8B2B5});
+    const baseGeometry = new THREE.ConeGeometry(this.radius, this.radius / 2);
+    const base = new THREE.Mesh(baseGeometry, baseMaterial);
+    this.base = base;
+    this.parent.mesh.add(base);
+    base.rotateX(degToRad(180));
+
+    const topGeometry = new THREE.SphereGeometry(this.radius * 0.85, 8, 6, 0, Math.PI);
+    const topMaterial = new THREE.MeshLambertMaterial({color: 0xB1E8FA});
+    const top = new THREE.Mesh(topGeometry, topMaterial);
+    base.add(top);
+    top.rotateX(degToRad(90));
+    top.position.setY(-0.5);
+
+    base.position.setY(this.heightOffset);
+  }
+}
+
 class WorkerGroup {
   constructor(type) {
     this.type = type;
@@ -440,6 +493,11 @@ class WorkerGroup {
        this.speed += 0.008;
        this.generateWorkers(1);
        break;
+      case 'alien':
+       this.storage = new StorageAlien(this);
+       this.speed += 0.1;
+       // this.generateWorkers(1); Actually, we probs shouldnt unless we make a way to turn off the "physics"
+       break;
     }
 
     this.storage.createObjects();
@@ -470,6 +528,10 @@ class WorkerGroup {
   }
 
   atTarget() {
+    if (this.type == 'alien') {
+      const offset = new THREE.Vector3(0, this.storage.heightOffset, 0);
+      return new THREE.Box3().setFromObject(this.mesh).expandByVector(offset).expandByScalar(1.5).containsPoint(this.target);
+    }
     return new THREE.Box3().setFromObject(this.mesh).expandByScalar(1.5).containsPoint(this.target);
   }
 
@@ -490,9 +552,13 @@ class WorkerGroup {
       this.mesh.position.setY(intersections[0].point.y + PLAYER_DIMENSIONS.legsHeight);
     }
 
+    const exchangeDelay = this.storage.customExchangeDelay || 1000;
+    const exchangeFunction = this.storage.customExchangeFunction.bind(this.storage) || function(status) {};
+
     if (this.state == 'get') {
       if (this.atTarget() && this.block) {
         this.state = 'picking up';
+        exchangeFunction(true);
         this.target = new THREE.Vector3().copy(this.block.position);
         scene.remove(this.block);
         this.mesh.add(this.block);
@@ -500,8 +566,9 @@ class WorkerGroup {
         this.block.position.set(placement.x, placement.y, placement.z);
 
         setTimeout(function() {
+          exchangeFunction(false);
           this.getPlacementTarget();
-        }.bind(this), 1000);
+        }.bind(this), exchangeDelay);
       }
     }
     else if(this.state == 'going back') {
@@ -513,6 +580,7 @@ class WorkerGroup {
 
       if (this.atTarget() && this.block) {
         this.state = 'putting down';
+        exchangeFunction(true);
         const blockPos = new THREE.Vector3().copy(this.target);
         this.target = new THREE.Vector3().copy(this.target);
         this.mesh.remove(this.block);
@@ -522,8 +590,9 @@ class WorkerGroup {
         this.block = {};
 
         setTimeout(function() {
+          exchangeFunction(false);
           this.getBlockTarget();
-        }.bind(this), 1000);
+        }.bind(this), exchangeDelay);
       }
     }
 
@@ -532,16 +601,16 @@ class WorkerGroup {
     });
   }
 }
-workerGroups.push(new WorkerGroup('camel'));
+workerGroups.push(new WorkerGroup('alien'));
 // for (var i = 0; i < 5; i++) {
 //   workerGroups.push(new WorkerGroup('basic'));
 // }
-for (var i = 0; i < 5; i++) {
-  workerGroups.push(new WorkerGroup('strong'));
-}
-for (var i = 0; i < 5; i++) {
-  workerGroups.push(new WorkerGroup('camel'));
-}
+// for (var i = 0; i < 5; i++) {
+//   workerGroups.push(new WorkerGroup('strong'));
+// }
+// for (var i = 0; i < 5; i++) {
+//   workerGroups.push(new WorkerGroup('camel'));
+// }
 
 function render() {
   requestAnimationFrame(render);
