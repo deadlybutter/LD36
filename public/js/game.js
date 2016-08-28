@@ -82,6 +82,7 @@ scene.add(sun2);
 
 const terrainGeometry = new THREE.PlaneGeometry(GROUND_WIDTH, GROUND_WIDTH, 25, 25);
 terrainGeometry.rotateX(-Math.PI / 2);
+
 terrainGeometry.vertices.forEach(function(vertice) {
   vertice.y = getRandomArbitrary(-0.5, 0.5);
 });
@@ -90,6 +91,12 @@ const sandSpec = textureLoader.load("img/sand_spec.png");
 // const terrainTexture = new THREE.MeshLambertMaterial({color: GROUND_COLOR, emissive: 0x3e0000, side: THREE.DoubleSide, emissiveMap: sandSpec});
 const terrainTexture = new THREE.MeshLambertMaterial({color: GROUND_COLOR});
 const terrain = new THREE.Mesh(terrainGeometry, terrainTexture);
+terrainGeometry.faces.forEach(function(face) {
+  face.color.r = getRandomInt(230, 250);
+  face.color.g = getRandomInt(200, 230);
+  face.color.b = getRandomInt(50, 150);
+});
+terrainGeometry.computeFaceNormals();
 scene.add(terrain);
 
 const CUBE_LENGTH = 1;
