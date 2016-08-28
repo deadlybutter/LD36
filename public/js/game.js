@@ -38,7 +38,8 @@ const SUN_PAN_RADIUS = 10;
 const SUN_PAN_SPEED = 1;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, GROUND_WIDTH * 2);
+const SCENE_HEIGHT = window.innerHeight * .80;
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / SCENE_HEIGHT, 0.1, GROUND_WIDTH * 2);
 camera.position.z = 100;
 camera.position.y = 25;
 
@@ -50,9 +51,15 @@ const textureLoader = new THREE.TextureLoader();
 const clock = new THREE.Clock();
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth, SCENE_HEIGHT);
 renderer.setClearColor(SKY_COLOR_LIGHT);
-document.body.appendChild(renderer.domElement);
+document.body.insertBefore(renderer.domElement, document.getElementById('container'));
+
+var animationID = 0;
+renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
+  event.preventDefault();
+  cancelAnimationFrame(animationID);
+}, false); //http://stackoverflow.com/questions/14350350/how-do-we-handle-webgl-context-lost-event-in-three-js
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.target = new THREE.Vector3(0, 0, 0);
@@ -75,7 +82,7 @@ scene.add(sun2);
 
 const terrainGeometry = new THREE.PlaneGeometry(GROUND_WIDTH, GROUND_WIDTH, 25, 25);
 terrainGeometry.rotateX(-Math.PI / 2);
-terrainGeometry.vertices.forEach((vertice) => {
+terrainGeometry.vertices.forEach(function(vertice) {
   vertice.y = getRandomArbitrary(-0.5, 0.5);
 });
 
@@ -89,10 +96,16 @@ const CUBE_LENGTH = 1;
 const cubeGeometry = new THREE.BoxGeometry(CUBE_LENGTH, CUBE_LENGTH, CUBE_LENGTH);
 const cubeMaterial = new THREE.MeshLambertMaterial({wireframe: false, color: 0xffffff});
 const availableCubes = [];
-const PYRAMID_HEIGHT = developerMode() ? 7 : 17;
-var pyramidGrid = [];
+const PYRAMID_HEIGHT = developerMode() ? 4 : 17;
+const pyramidGrid = [];
+const pyramidLayers = [];
 for (var i = 0; i < PYRAMID_HEIGHT; i++) {
   pyramidGrid.push([]);
+
+  const layerGeometry = new THREE.Geometry();
+  layerGeometry.dynamic = true;
+  const layerMesh = new THREE.Mesh(layerGeometry, cubeMaterial);
+  pyramidLayers.push([layerGeometry, layerMesh, false]);
 }
 
 function getTotalBlocksInLayer(yTest) {
@@ -161,6 +174,19 @@ function addBlockToWorld(pos) {
   cube.position.set(pos.x, pos.y, pos.z);
   scene.add(cube);
   return cube;
+}
+
+function addBlockToPyramid(block) {
+  const y = block.position.y;
+  const layerGeometry = pyramidLayers[y][0];
+  layerGeometry.elementsNeedUpdate = true;
+  block.updateMatrix();
+  layerGeometry.merge(block.geometry, block.matrix);
+
+  if (!pyramidLayers[y][2]) {
+    scene.add(pyramidLayers[y][1]);
+    pyramidLayers[y][2] = true;
+  }
 }
 
 const GROUND_WIDTH_HALF = GROUND_WIDTH / 2;
@@ -589,8 +615,9 @@ class WorkerGroup {
         this.target = new THREE.Vector3().copy(this.target);
         this.mesh.remove(this.block);
         const newBlock = this.block.clone();
-        scene.add(newBlock);
         newBlock.position.set(blockPos.x, blockPos.y, blockPos.z);
+        //scene.add(newBlock);
+        addBlockToPyramid(newBlock);
         this.block = {};
 
         setTimeout(function() {
@@ -605,19 +632,14 @@ class WorkerGroup {
     });
   }
 }
-workerGroups.push(new WorkerGroup('alien'));
-for (var i = 0; i < 5; i++) {
+
+// Starting builders
+for (var i = 0; i < 4; i++) {
   workerGroups.push(new WorkerGroup('basic'));
-}
-for (var i = 0; i < 5; i++) {
-  workerGroups.push(new WorkerGroup('strong'));
-}
-for (var i = 0; i < 5; i++) {
-  workerGroups.push(new WorkerGroup('camel'));
 }
 
 function render() {
-  requestAnimationFrame(render);
+  animationID = requestAnimationFrame(render);
   controls.update();
 
   workerGroups.forEach(function(workerGroup) {

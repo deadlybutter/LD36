@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+}
+
+body > canvas {
+  width: 100;
+  height: 60%;
+}
+
+.container {
+  width: 100%;
+  height: 40%;
+  position: absolute;
+  top: 80%;
+  left: 0;
+  background-color: #634521;
+  overflow: hidden;
+
+  -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+  -moz-user-select: none; /* mozilla browsers */
+  -khtml-user-select: none; /* webkit (konqueror) browsers */
+  -ms-user-select: none;
+  /* http://stackoverflow.com/questions/880512/prevent-text-selection-after-double-click */
+}
+
+.container .wrapper {
+  position: absolute;;
+  left: 8px;
+  top: 8px;
+  right: 8px;
+}
+
+.container .column {
+  width: 33.33%;
+  position: absolute;
+  border: 4px outset #BFA840;
+  background: #22170B;
+  height: 36.5vh;
+  color: #CDEEEC;
+  text-align: center;
+}
+
+.container .column.shop {
+  overflow-y: scroll;
+}
+
+.container .column.market {
+  height: 16.5vh;
+}
+
+.container .column:nth-of-type(2) {
+  left: 33.33%;
+}
+
+.container .column:nth-of-type(3) {
+  left: 66.66%;
+}
+
+.column .column__half {
+  width: 50%;
+  position: absolute;
+}
+
+.column .column__half:nth-of-type(2) {
+  left: 50%;
+}
+
+.block * {
+  display: inline-block;
+}
+
+.shop .item {
+  background-color: #FFF;
+  margin: 8px;
+  color: #111;
+  cursor: pointer;
+}
+
+.shop .item span {
+  color: #BFA840;
+}
+
+.shop .item img {
+  width: 50%;
+  display: block;
+  margin: auto;
+  position: relative;
+}
+
+#clicker {
+  cursor: pointer;
+}
+
+.market .market__stats {
+  text-align: left;
+}
