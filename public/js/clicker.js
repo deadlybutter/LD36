@@ -79,7 +79,7 @@ function addTrader($element) {
   const goldPerTurn = $element.data('work');
   addGoldPerTurn(goldPerTurn);
   var img = "";
-  if (images.length > 20) {
+  if (traders.length < 20) {
     img = images[`trader${getRandomInt(1, 3)}`];
   }
   const widthPadding = getWidthPadding();
