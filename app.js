@@ -6,6 +6,6 @@ app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.listen(5000, function () {
+app.listen(process.env.PORT, function () {
   console.log('LD36 app listening on port 5000!');
 });
