@@ -87,16 +87,18 @@ terrainGeometry.vertices.forEach(function(vertice) {
   vertice.y = getRandomArbitrary(-0.5, 0.5);
 });
 
+const colors = [0xD0C371, 0xC7A757, 0xC79A57, 0xD4BD7D];
+terrainGeometry.faces.forEach(function(face) {
+  const color = colors[getRandomInt(0, colors.length - 1)];
+  console.log(color)
+  face.color.setHex(color);
+});
+
 const sandSpec = textureLoader.load("img/sand_spec.png");
 // const terrainTexture = new THREE.MeshLambertMaterial({color: GROUND_COLOR, emissive: 0x3e0000, side: THREE.DoubleSide, emissiveMap: sandSpec});
-const terrainTexture = new THREE.MeshLambertMaterial({color: GROUND_COLOR});
+// const terrainTexture = new THREE.MeshLambertMaterial({color: GROUND_COLOR});
+const terrainTexture = new THREE.MeshBasicMaterial({vertexColors: THREE.FaceColors});
 const terrain = new THREE.Mesh(terrainGeometry, terrainTexture);
-terrainGeometry.faces.forEach(function(face) {
-  face.color.r = getRandomInt(230, 250);
-  face.color.g = getRandomInt(200, 230);
-  face.color.b = getRandomInt(50, 150);
-});
-terrainGeometry.computeFaceNormals();
 scene.add(terrain);
 
 const CUBE_LENGTH = 1;
