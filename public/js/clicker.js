@@ -27,6 +27,9 @@ class Trader {
   }
 
   render(ctx, width, height) {
+    if (this.img == "") {
+      return;
+    }
     ctx.drawImage(this.img, this.x, this.y, width, height);
   }
 }
@@ -75,7 +78,10 @@ function loadImages(imagesToLoad) {
 function addTrader($element) {
   const goldPerTurn = $element.data('work');
   addGoldPerTurn(goldPerTurn);
-  const img = images[`trader${getRandomInt(1, 3)}`];
+  var img = "";
+  if (images.length > 20) {
+    img = images[`trader${getRandomInt(1, 3)}`];
+  }
   const widthPadding = getWidthPadding();
   traders.push(new Trader(img, getRandomInt(widthPadding * 2, canvas.width - (widthPadding * 2)), (canvas.height / 2) - getHeightPadding()));
 }

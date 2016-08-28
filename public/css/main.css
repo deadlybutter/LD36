@@ -11,7 +11,7 @@ body > canvas {
   width: 100%;
   height: 40%;
   position: absolute;
-  top: 80%;
+  top: 60%;
   left: 0;
   background-color: #634521;
   overflow: hidden;
@@ -74,17 +74,19 @@ body > canvas {
   margin: 8px;
   color: #111;
   cursor: pointer;
+  max-height: 96px;
+  text-align: left;
+}
+
+.shop .item img {
+  height: 64px;
+  width: 64px;
+  float: left;
+  margin-bottom: 24px;
 }
 
 .shop .item span {
   color: #BFA840;
-}
-
-.shop .item img {
-  width: 50%;
-  display: block;
-  margin: auto;
-  position: relative;
 }
 
 #clicker {

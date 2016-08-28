@@ -5,7 +5,7 @@
  - [x] we can reverse engineer our pyramid draw algorithm to instead get the block placement required
 - [x] add the other technology objects
 - [x] Merge the pyramid geometry after layer finish. Need this to maintain 60fps as game progresses
-- [ ] work on interface to actually control the units, buy more, upgrade, etc
+- [x] work on interface to actually control the units, buy more, upgrade, etc
 - [ ] win state (see below)
 - [ ] remaining ENHANCEMENTS
 

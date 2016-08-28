@@ -38,7 +38,7 @@ const SUN_PAN_RADIUS = 10;
 const SUN_PAN_SPEED = 1;
 
 const scene = new THREE.Scene();
-const SCENE_HEIGHT = window.innerHeight * .80;
+const SCENE_HEIGHT = window.innerHeight * .60;
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / SCENE_HEIGHT, 0.1, GROUND_WIDTH * 2);
 camera.position.z = 100;
 camera.position.y = 25;
@@ -96,7 +96,7 @@ const CUBE_LENGTH = 1;
 const cubeGeometry = new THREE.BoxGeometry(CUBE_LENGTH, CUBE_LENGTH, CUBE_LENGTH);
 const cubeMaterial = new THREE.MeshLambertMaterial({wireframe: false, color: 0xffffff});
 const availableCubes = [];
-const PYRAMID_HEIGHT = developerMode() ? 4 : 17;
+const PYRAMID_HEIGHT = 7;
 const pyramidGrid = [];
 const pyramidLayers = [];
 for (var i = 0; i < PYRAMID_HEIGHT; i++) {
